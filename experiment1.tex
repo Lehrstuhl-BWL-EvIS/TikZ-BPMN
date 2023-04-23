@@ -1,0 +1,61 @@
+\documentclass[11pt,final,usepdftitle=false]{beamer}
+\mode<presentation>
+%\usetheme{goettingen}
+\usepackage{tikz}
+\usepackage{tikz-bpmn}
+\usetikzlibrary{positioning}
+
+
+\begin{document}
+\begin{frame}{Simple BPMN diagram}
+  \begin{tikzpicture}[node distance=1.2em]
+    % \tikzstyle{every task} = [thick,fill=white]
+    % \tikzstyle{every sequence} = [thick]
+    % \tikzstyle{every gateway} = [thick,fill=white]
+    % \tikzstyle{every event} = [thick,fill=white]
+    % \tikzstyle{end event} = [event,line width=2.5pt,fill=white]
+
+    \node[message start event] (start) {};
+    \node[task,node distance=3em,right=of start] (task1) { Test task };
+    \draw[sequence,->] (start) -- (task1);
+    \node[end event,node distance=3em,right=of task1] (endevent) {};
+    \draw[sequence,->] (task1) -- (endevent);
+
+    % \node[task,node distance=3em,right=of updglite] (ca) { Create \\ CA };
+    % \draw[sequence,->] (updglite) -- (ca);
+    % \node[task,node distance=3em,right=of ca] (vo) { Create VO and \\configure VOMS};
+    % \draw[sequence,->] (ca) -- (vo);
+
+    % \node[gateway,node distance=10em,below=of start] (pg) {+};
+    
+    % \draw[sequence,->] (vo) -- ++(6em,0) -- ++(0,-5em) node(foo){} -- (pg |- foo) -- ++(-2em,0) node(foo2){} -- (foo2 |- pg) -- (pg);
+    
+    % \node[task,above right=of pg] (bdii) {Configure \\ BDII};
+    % \draw[sequence,->] (pg) |- (bdii);
+    % \node[gateway,right=of bdii] (pg2) {+};
+    % \draw[sequence,->] (bdii) -- (pg2);
+    % \node[task,right=of pg2] (wn) {Configure \\ worker nodes\\ and batch};
+    % \draw[sequence,->] (pg2) -- (wn);
+    % \node[align=center,below=of wn] (etc2) { {\Large \ldots } \\ \small (on each cluster)};
+    % %	\node[below right=of pg2] (etc2-target) {};
+    % \draw[sequence,->,loosely dashed] (pg2) |- (etc2);
+    %     \node[gateway,below right=of wn] (pg3) {+};
+    %     \draw[sequence,->,loosely dashed] (etc2) -| (pg3);
+    %     \draw[sequence,->] (wn) -| (pg3);
+    %     \node[task,right=of pg3] (ce) {Configure \\ CE};
+    %     \draw[sequence,->] (pg3) -- (ce);
+    %     \node[task,right=of ce] (ui) {Configure \\ UI};
+    %     \draw[sequence,->] (ce) -- (ui);
+    %     \node[gateway,right=of ui] (pg4) {+};
+    %     \draw[sequence,->] (ui) -- (pg4);
+    %     \node[end event,right=of pg4] (end) {};
+    %     \draw[sequence,->] (pg4) -- (end);
+
+
+    %     \node[align=center,below=of etc2] (etc1) { {\Large \ldots } \small (on each site)};
+    %     \draw[sequence,->,loosely dashed] (pg) |- (etc1);
+    %     \draw[sequence,->,loosely dashed] (etc1) -| (pg4);
+    \end{tikzpicture}
+  \end{frame}
+
+\end{document}

@@ -1,0 +1,81 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows, shapes, trees, positioning, decorations.markings, patterns}
+
+\usepackage{bpmn-events}
+
+\author{Jan Kubovy}
+\title{BPMN Gateways}
+
+\begin{document}
+
+\begin{tikzpicture}[node distance=1.5cm,minimum size=1cm]
+  \node [StartEvent] (se) {};
+  \node [IntermediateEvent,right of=se,xshift=4.5cm] (ie) {};
+  \node [EndEvent,right of=ie] (ie) {};
+
+  \node [MessageStartEvent,below of=se] (mse) {};
+  \node [MessageNonInterruptingStartEvent,right of=mse] (mnise) {};
+  % \node [MessageIntermediateCatchingEvent,right of=mnise] (mice) {};
+  % \node [MessageNonInterruptingIntermediateCatchingEvent,right of=mice] (mnise {};
+  % \node [MessageIntermediateThrowingEvent,right of=mniice] (mite) {};
+  \node [MessageEndEvent,right of=mnise] (mee) {};
+
+  % \node [TimerStartEvent,below of=mse] (tse) {};
+  % \node [TimerNonInterruptingStartEvent,right of=tse] (tnise) {};
+  % \node [TimerIntermediateCatchingEvent,right of=tnise] (ticee) {};
+  % \node [TimerNonInterruptingIntermediateCatchingEvent,right of=ticee] (tniice) {};
+
+  % \node [ErrorStartEvent,below of=tse] (ese) {};
+  % \node [ErrorIntermediateEvent,right of=ese,xshift=1.5cm] (eie) {};
+  % \node [ErrorEndEvent,right of=eie,xshift=3cm] (eee) {};
+
+  % \node [EscalationStartEvent,below of=ese] (escse) {};
+  % \node [EscalationNonInterruptingStartEvent,right of=escse] (escnise) {};
+  % \node [EscalationIntermediateCatchingEvent,right of=escnise] (escice) {};
+  % \node [EscalationNonInterruptingIntermediateCatchingEvent,right of=escice] (escniice) {};
+  % \node [EscalationIntermediateThrowingEvent,right of=escniice] (escite) {};
+  % \node [EscalationEndEvent,right of=escite] (escee) {};
+
+  % \node [CancelIntermediateCatchingEvent,below of=escice] (cice) {};
+  % \node [CancelEndEvent,right of=cice,xshift=3cm] (cee) {};
+
+  % \node [CompensationStartEvent,below of=escse,yshift=-1.5cm] (compse) {};
+  % \node [CompensationIntermediateCatchingEvent,right of=compse,xshift=1.5cm] (compice) {};
+  % \node [CompensationIntermediateThrowingEvent,right of=compice,xshift=1.5cm] (compite) {};
+  % \node [CompensationEndEvent,right of=compite] (compee) {};
+
+  % \node [ConditionalStartEvent,below of=compse] (condse) {};
+  % \node [ConditionalNonInterruptingStartEvent,right of=condse] (condnise) {};
+  % \node [ConditionalIntermediateCatchingEvent,right of=condnise] (condice) {};
+  % \node [ConditionalNonInterruptingIntermediateCatchingEvent,right of=condice] (condniice) {};
+
+  % \node [LinkIntermediateCatchingEvent,below of=condse,xshift=3cm] (lice) {};
+  % \node [LinkIntermediateThrowingEvent,right of=lice,xshift=1.5cm] (lite) {};
+
+  % \node [SignalStartEvent,below of=lice,xshift=-3cm] (sse) {};
+  % \node [SignalNonInterruptingStartEvent,right of=sse] (snise) {};
+  % \node [SignalIntermediateCatchingEvent,right of=snise] (sice) {};
+  % \node [SignalNonInterruptingIntermediateCatchingEvent,right of=sice] (siice) {};
+  % \node [SignalIntermediateThrowingEvent,right of=siice] (site) {};
+  % \node [SignalEndEvent,right of=site] (see) {};
+
+  % \node [TerminateEndEvent,below of=see] (tee) {};
+
+  % \node [MultipleStartEvent,below of=sse,yshift=-1.5cm] (mse) {};
+  % \node [MultipleNonInterruptingStartEvent,right of=mse] (mnise) {};
+  % \node [MultipleIntermediateCatchingEvent,right of=mnise] (mice) {};
+  % \node [MultipleNonInterruptingIntermediateCatchingEvent,right of=mice] (mniice) {};
+  % \node [MultipleIntermediateThrowingEvent,right of=mniice] (mite) {};
+  % \node [MultipleEndEvent,right of=mite] (mee) {};
+
+  % \node [ParallelMultipleStartEvent,below of=mse] (pmse) {};
+  % \node [ParallelMultipleNonInterruptingStartEvent,right of=pmse] (pmnise) {};
+  % \node [ParallelMultipleIntermediateCatchingEvent,right of=pmnise] (pmice) {};
+  % \node [ParallelMultipleNonInterruptingIntermediateCatchingEvent,right of=pmice] (pmniice) {};
+\end{tikzpicture}
+
+\end{document}

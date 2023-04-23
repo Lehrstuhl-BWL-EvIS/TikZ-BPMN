@@ -1,0 +1,667 @@
+% https://leemans.ch/latex/
+% by Sander Leemans
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tikz-bpmn}[2011/08/16 BPMN diagrams using the
+Tikz library]
+
+\RequirePackage{xcolor}
+\RequirePackage{tikz}
+\RequirePackage{bm}
+
+%this can be overridden to set the background colour, necessary for drawing double lines and other things.
+\colorlet{defaultbackgroundcolour}{white}
+
+\usetikzlibrary{shapes,shapes.geometric}
+\usetikzlibrary{arrows}
+\usetikzlibrary{calc}
+
+\tikzstyle{every task} = []
+\tikzstyle{every gateway} = []
+\tikzstyle{every sequence} = []
+\tikzstyle{every message} = []
+\tikzstyle{every association} = []
+\tikzstyle{every event} = []
+\tikzstyle{every intermediate event} = []
+\tikzstyle{every token} = []
+\tikzstyle{every call activity} = []
+
+\tikzstyle{task} = [rectangle, draw, minimum width=4em, minimum height=2em,rounded corners,align=center,every task]
+
+\tikzstyle{sequence} = [->,>=triangle 45,every sequence]
+\tikzstyle{reverse sequence} = [sequence,<-]
+\tikzstyle{message} = [o->,dashed,>=open triangle 45,every sequence]
+\tikzstyle{reverse message} = [message,<-o]
+\tikzstyle{association} = [densely dotted,>=angle 45,every association]
+\tikzstyle{event} = [circle,minimum width=1.5em, minimum height=1.5em,draw,every event]
+\tikzstyle{end event} = [event,ultra thick,every event]
+\tikzstyle{intermediate event}[defaultbackgroundcolour] = [event,double=#1,every event, every intermediate event]
+\tikzstyle{token} = [solid,circle,fill,inner sep=0.5mm]
+\tikzstyle{open token} = [solid,circle,draw,fill=red,inner sep=0.5mm,thick]
+
+\tikzset{fit margins/.style={/tikz/afit/.cd,#1,
+    /tikz/.cd,
+    inner xsep=\pgfkeysvalueof{/tikz/afit/left}+\pgfkeysvalueof{/tikz/afit/right},
+    inner ysep=\pgfkeysvalueof{/tikz/afit/top}+\pgfkeysvalueof{/tikz/afit/bottom},
+    xshift=-\pgfkeysvalueof{/tikz/afit/left}+\pgfkeysvalueof{/tikz/afit/right},
+    yshift=-\pgfkeysvalueof{/tikz/afit/bottom}+\pgfkeysvalueof{/tikz/afit/top}},
+    afit/.cd,left/.initial=2pt,right/.initial=2pt,bottom/.initial=2pt,top/.initial=2pt}
+
+\tikzstyle{text annotation} = [
+	font=\tiny,
+	path picture = {
+		\def\w{3mm}
+		\draw ($(path picture bounding box.north west)+(\w,0)$) to (path picture bounding box.north west) to (path picture bounding box.south west) to ($(path picture bounding box.south west)+(\w,0)$);
+	}
+]
+
+%%%%% gateways %%%%%
+
+\tikzstyle{gateway} = [
+	diamond, 
+	draw, 
+	inner sep=0pt,
+	minimum width=1.5em,
+	minimum height=1.5em,
+	align=center,
+	every gateway
+]
+
+\tikzstyle{and gateway} = [parallel gateway]
+\tikzstyle{parallel gateway} = [
+	gateway,
+	label=center:\Large +
+]
+
+\tikzstyle{xor gateway} = [exclusive gateway]
+\tikzstyle{exclusive gateway} = [
+	gateway,
+	label=center:\Large\texttimes
+]
+
+\tikzstyle{or gateway} = [inclusive gateway]
+\tikzstyle{inclusive gateway} = [
+	gateway,
+	path picture = {
+		\pgfpointdiff{\pgfpointanchor{path picture bounding box}{south east}}{\pgfpointanchor{path picture bounding box}{north east}}
+		\pgfmathsetmacro\d{\csname pgf@y\endcsname}
+		\node [draw, thick, circle, inner sep=0, minimum size=0.55*\d pt, anchor=center] at (path picture bounding box.center) {};
+	}
+]
+
+\tikzstyle{eventbased gateway} = [
+	gateway,
+	path picture = {
+		\pgfpointdiff{\pgfpointanchor{path picture bounding box}{south east}}{\pgfpointanchor{path picture bounding box}{north east}}
+		\pgfmathsetmacro\d{\csname pgf@y\endcsname}
+		\node [draw, thin, circle, inner sep=0, minimum size=0.6*\d pt, anchor=center] at (path picture bounding box.center) {};
+		\node [draw, thin, circle, inner sep=0, minimum size=0.5*\d pt, anchor=center] at (path picture bounding box.center) {};
+		\node [draw, thin, regular polygon, regular polygon sides=5, inner sep=0, minimum size=0.35*\d pt, anchor=center] at (path picture bounding box.center) {};
+	}
+]
+
+%%%%% empty events %%%%%
+
+\tikzstyle{start event} = [event]
+\tikzstyle{none start event} = [start event]
+
+%%%%% message events %%%%%
+
+\tikzstyle{message start event} = [
+	start event,
+	draw message
+]
+
+\tikzstyle{catching message intermediate event}[defaultbackgroundcolour] = [
+	draw message,
+	intermediate event=#1
+]
+
+\tikzstyle{throwing message event}[defaultbackgroundcolour] = [
+	path picture = {
+		\def\w{1.7mm}
+		\def\h{1.1mm}
+		\fill ($(path picture bounding box)+(\w,\h)$) rectangle ($(path picture bounding box)+(-\w,-\h)$);
+		\draw [#1, line cap=round, thin] ($(path picture bounding box)+(\w,\h)$) to (path picture bounding box.center);
+		\draw [#1, line cap=round, thin] ($(path picture bounding box)+(-\w,\h)$) to (path picture bounding box.center);
+	}	
+]
+
+\tikzstyle{throwing message intermediate event}[defaultbackgroundcolour] = [
+	draw filled message={#1},
+	intermediate event=#1
+]
+
+\tikzstyle{message end event}[defaultbackgroundcolour] = [
+	end event,
+	draw filled message={#1}
+]
+
+\tikzstyle{terminate event} = [
+	end event,
+	path picture = {
+		\pgfpointdiff{\pgfpointanchor{path picture bounding box}{south east}}{\pgfpointanchor{path picture bounding box}{north east}}
+		\pgfmathsetmacro\d{\csname pgf@y\endcsname}
+		\node [fill, circle, inner sep=0, minimum size=0.65*\d pt, anchor=center] at (path picture bounding box.center) {};
+	}
+]
+
+%%%%% other events %%%%%
+
+\tikzstyle{draw signal}[] = [
+	path picture = {
+		\def\ma{0.8} %1 - margin
+		\pgfpointdiff{\pgfpointanchor{path picture bounding box}{south east}}{\pgfpointanchor{path picture bounding box}{north east}}
+		\pgfmathsetmacro\d{\csname pgf@y\endcsname}
+		\coordinate (a) at ($(path picture bounding box.center)+(90:\ma*0.5*\d pt)$);
+		\coordinate (b) at ($(path picture bounding box.center)+(210:\ma*0.5*\d pt)$);
+		\coordinate (c) at ($(path picture bounding box.center)+(330:\ma*0.5*\d pt)$);
+		\draw [solid, #1] (a) to (b) to (c) to cycle;
+	}
+]
+
+\tikzstyle{draw error}[] = [
+	path picture = {
+		\def\de{38} %degrees low peaks
+		\def\df{100} %degrees high peaks
+		\def\dd{0.38} %width at valleys
+		\def\ma{0.8} %1 - margin
+		\pgfpointdiff{\pgfpointanchor{path picture bounding box}{south east}}{\pgfpointanchor{path picture bounding box}{north east}}
+		\pgfmathsetmacro\d{\csname pgf@y\endcsname}
+		\coordinate (path picture bounding box a) at ($(path picture bounding box.center)+(\de:\ma*0.5*\d pt)$);
+		\coordinate (path picture bounding box b) at ($(path picture bounding box.center)+(180+\de:\ma*0.5*\d pt)$);
+		\coordinate (path picture bounding box c) at ($(path picture bounding box.center)+(\df:\ma*0.5*\d pt)$);
+		\coordinate (path picture bounding box d) at ($(path picture bounding box.center)+(180+\df:\ma*0.5*\d pt)$);
+		\coordinate (path picture bounding box e) at ($(path picture bounding box c)+(0,-\dd*\d pt)$);
+		\coordinate (path picture bounding box f) at ($(path picture bounding box d)+(0,\dd*\d pt)$);
+		\draw [solid, #1] (path picture bounding box a) to (path picture bounding box f) to (path picture bounding box c) to (path picture bounding box b) to (path picture bounding box e) to (path picture bounding box d) to cycle;
+	}
+]
+
+\tikzstyle{draw message} = [
+	path picture = {
+		\def\de{38} %degrees
+		\def\ma{0.2} %margin
+		\def\li{0.4} %lid
+		\coordinate (path picture bounding box a1) at ($(path picture bounding box.east)!{sin(\de)-\ma}!(path picture bounding box.north east)$);
+		\coordinate (path picture bounding box a2) at ($(path picture bounding box.center)!{cos(\de)-\ma}!(path picture bounding box.east)$);
+		\coordinate (path picture bounding box a) at (path picture bounding box a1 -| path picture bounding box a2);
+		\coordinate (path picture bounding box b1) at ($(path picture bounding box.east)!{sin(\de)-\ma}!(path picture bounding box.south east)$);
+		\coordinate (path picture bounding box b) at (path picture bounding box b1 -| path picture bounding box a2);
+		\coordinate (path picture bounding box c1) at ($(path picture bounding box.west)!{sin(\de)-\ma}!(path picture bounding box.north west)$);
+		\coordinate (path picture bounding box c2) at ($(path picture bounding box.center)!{cos(\de)-\ma}!(path picture bounding box.west)$);
+		\coordinate (path picture bounding box c) at (path picture bounding box c1 -| path picture bounding box c2);
+		\coordinate (path picture bounding box d1) at ($(path picture bounding box.west)!{sin(\de)-\ma}!(path picture bounding box.south west)$);
+		\coordinate (path picture bounding box d) at (path picture bounding box d1 -| path picture bounding box c2);
+		\coordinate (path picture bounding box e1) at ($(path picture bounding box a)!0.5!(path picture bounding box c)$);
+		\coordinate (path picture bounding box e2) at ($(path picture bounding box b)!0.5!(path picture bounding box d)$);
+		\coordinate (path picture bounding box e) at ($(path picture bounding box e1)!\li!(path picture bounding box e2)$);
+		\draw [solid] (path picture bounding box a) to (path picture bounding box b) to (path picture bounding box d) to (path picture bounding box c) to cycle;
+		\draw [solid, line cap=round] (path picture bounding box a) to (path picture bounding box e) to (path picture bounding box c);
+	}
+]
+
+\tikzstyle{draw filled message} = [
+	path picture = {
+		\def\de{38} %degrees
+		\def\ma{0.2} %margin
+		\def\li{0.4} %lid
+		\coordinate (path picture bounding box a1) at ($(path picture bounding box.east)!{sin(\de)-\ma}!(path picture bounding box.north east)$);
+		\coordinate (path picture bounding box a2) at ($(path picture bounding box.center)!{cos(\de)-\ma}!(path picture bounding box.east)$);
+		\coordinate (path picture bounding box a) at (path picture bounding box a1 -| path picture bounding box a2);
+		\coordinate (path picture bounding box b1) at ($(path picture bounding box.east)!{sin(\de)-\ma}!(path picture bounding box.south east)$);
+		\coordinate (path picture bounding box b) at (path picture bounding box b1 -| path picture bounding box a2);
+		\coordinate (path picture bounding box c1) at ($(path picture bounding box.west)!{sin(\de)-\ma}!(path picture bounding box.north west)$);
+		\coordinate (path picture bounding box c2) at ($(path picture bounding box.center)!{cos(\de)-\ma}!(path picture bounding box.west)$);
+		\coordinate (path picture bounding box c) at (path picture bounding box c1 -| path picture bounding box c2);
+		\coordinate (path picture bounding box d1) at ($(path picture bounding box.west)!{sin(\de)-\ma}!(path picture bounding box.south west)$);
+		\coordinate (path picture bounding box d) at (path picture bounding box d1 -| path picture bounding box c2);
+		\coordinate (path picture bounding box e1) at ($(path picture bounding box a)!0.5!(path picture bounding box c)$);
+		\coordinate (path picture bounding box e2) at ($(path picture bounding box b)!0.5!(path picture bounding box d)$);
+		\coordinate (path picture bounding box e) at ($(path picture bounding box e1)!\li!(path picture bounding box e2)$);
+		\fill (path picture bounding box a) to (path picture bounding box b) to (path picture bounding box d) to (path picture bounding box c) to cycle;
+		\draw [line cap=round, line width=1pt, #1] (path picture bounding box a) to (path picture bounding box e) to (path picture bounding box c);
+	}
+]
+
+\tikzstyle{draw compensation}[] = [
+	path picture = {
+		\def\de{40} %degrees
+		\def\ma{0.2} %margin
+		\coordinate (a1) at ($(path picture bounding box.east)!{sin(\de)-\ma}!(path picture bounding box.north east)$);
+		\coordinate (a2) at ($(path picture bounding box.center)!{cos(\de)-\ma}!(path picture bounding box.east)$);
+		\coordinate (a) at (a1 -| a2);
+		\coordinate (b1) at ($(path picture bounding box.east)!{sin(\de)-\ma}!(path picture bounding box.south east)$);
+		\coordinate (b) at (b1 -| a2);
+		\coordinate (c) at ($(path picture bounding box.west)!\ma!(path picture bounding box.center)$);
+		\coordinate (d1) at ($(a)!0.5!(b)$);
+		\coordinate (d) at ($(c)!0.5!(d1)$);
+		\coordinate (e) at (d |- a);
+		\coordinate (f) at (d |- b);
+		\draw [solid, #1] (d)
+		to (a)
+		to (b)
+		to cycle;
+		\draw [solid, #1] (c)
+		to (e)
+		to (f)
+		to cycle;
+	}
+]
+
+\tikzstyle{draw timer} = [
+	path picture = {
+		\def\ma{0.75} %1 - margin
+		\pgfpointdiff{\pgfpointanchor{path picture bounding box}{south east}}{\pgfpointanchor{path picture bounding box}{north east}}
+		\pgfmathsetmacro\r{\csname pgf@y\endcsname}
+		\draw [solid] (path picture bounding box.center) circle (\ma*0.5*\r pt);
+		\foreach \angle in {0,30,...,330}
+	  		\draw [solid, ultra thin] ($(path picture bounding box.center)+(\angle:\ma*0.4*\r pt)$) to ($(path picture bounding box.center)+(\angle:\ma*0.5*\r pt)$);
+	  	\draw [solid, line cap=round] ($(path picture bounding box.center)+(77:\ma*0.425*\r pt)$) to (path picture bounding box.center);
+	  	\draw [solid, line cap=round] ($(path picture bounding box.center)+(0:\ma*0.3*\r pt)$) to (path picture bounding box.center);
+	}
+]
+
+\tikzstyle{throwing compensation intermediate event}[defaultbackgroundcolour] = [
+	draw compensation={fill},
+	intermediate event=#1,
+]
+
+\tikzstyle{throwing compensation end event} = [
+	end event,
+	draw compensation={fill,thin}
+]
+
+\tikzstyle{error event} = [throwing error end event]
+\tikzstyle{throwing error end event} = [
+	end event,
+	draw error={fill,thin}
+]
+
+\tikzstyle{timer start event} = [
+	start event,
+	draw timer
+]
+
+\tikzstyle{timer event} = [timer intermediate event]
+\tikzstyle{timer intermediate event}[defaultbackgroundcolour] = [
+	intermediate event=#1,
+	draw timer
+]
+
+\tikzstyle{signal start event} = [
+	start event,
+	draw signal
+]
+
+\tikzstyle{signal intermediate event}[defaultbackgroundcolour] = [catching signal intermediate event=#1]
+\tikzstyle{catching signal intermediate event}[defaultbackgroundcolour] = [
+	intermediate event=#1,
+	draw signal
+]
+
+\tikzstyle{throwing signal intermediate event}[defaultbackgroundcolour] = [
+	intermediate event=#1,
+	draw signal={fill,draw=none}
+]
+
+\tikzstyle{signal end event} = [
+	end event,
+	draw signal={fill,draw=none}
+]
+
+%%%%% boundary events %%%%%
+
+\tikzstyle{boundary event}[defaultbackgroundcolour] = [
+	circle,
+	draw,
+	fill=#1,
+	double=#1,
+	anchor=center
+]
+
+\tikzstyle{noninterrupting boundary event}[defaultbackgroundcolour] = [
+	circle,
+	dashed,
+	dash pattern=on 1.5pt off 1pt,
+	draw,
+	fill=#1,
+	double=#1,
+	anchor=center
+]
+
+\tikzstyle{compensation boundary event}[defaultbackgroundcolour] = [
+	boundary event=#1,
+	draw compensation
+]
+
+\tikzstyle{message boundary event}[defaultbackgroundcolour] = [
+	boundary event=#1,
+	draw message
+]
+
+\tikzstyle{message noninterrupting boundary event}[defaultbackgroundcolour] = [	
+	draw message,
+	noninterrupting boundary event=#1
+]
+
+\tikzstyle{timer boundary event}[defaultbackgroundcolour] = [
+	boundary event=#1,
+	draw timer
+]
+
+\tikzstyle{timer noninterrupting boundary event}[defaultbackgroundcolour] = [
+	draw timer,
+	noninterrupting boundary event=#1
+]
+
+\tikzstyle{error boundary event}[defaultbackgroundcolour] = [
+	boundary event=#1,
+	draw error
+]
+
+\tikzstyle{signal boundary event}[defaultbackgroundcolour] = [
+	boundary event=#1,
+	draw signal
+]
+
+\tikzstyle{signal noninterrupting boundary event}[defaultbackgroundcolour] = [
+	draw signal,
+	noninterrupting boundary event=#1
+]
+
+%%%%% event sub-process %%%%%
+
+\tikzstyle{event subprocess} = [
+	expanded subprocess,
+	dotted
+]
+
+\tikzstyle{collapsed event subprocess} = [
+	collapsed subprocess,
+	dotted,
+	label={[anchor=north west,#1,circle,draw,minimum size=0.3cm,inner sep=0,xshift=0.1cm,yshift=-0.1cm]north west:}
+]
+
+\tikzstyle{collapsed noninterrupting event subprocess} = [
+	collapsed subprocess,
+	dotted,
+	label={[anchor=north west,
+		#1,
+		dashed,
+		draw,
+		circle,
+		dash pattern=on 1pt off 1pt,
+		minimum size=0.3cm,
+		inner sep=0,
+		xshift=0.1cm,
+		yshift=-0.1cm]north west:}
+]
+
+\tikzstyle{event subprocess label} = [
+	task, 
+	fit margins={left=1.5mm,right=1.5mm,bottom=1.5mm,top=2.1mm},
+	label={[anchor=north west]north west:\footnotesize#1},
+	dotted
+]
+
+\tikzstyle{message event subprocess} = [
+	collapsed event subprocess=draw message
+]
+
+\tikzstyle{timer event subprocess} = [
+	collapsed event subprocess=draw timer
+]
+
+\tikzstyle{compensation event subprocess} = [
+	collapsed event subprocess=draw compensation
+]
+
+\tikzstyle{signal event subprocess} = [
+	collapsed event subprocess=draw signal
+]
+
+\tikzstyle{error event subprocess} = [
+	collapsed event subprocess=draw error
+]
+
+\tikzstyle{message noninterrupting event subprocess} = [
+	collapsed noninterrupting event subprocess=draw message
+]
+
+\tikzstyle{timer noninterrupting event subprocess} = [
+	collapsed noninterrupting event subprocess=draw timer
+]
+
+\tikzstyle{signal noninterrupting event subprocess} = [
+	collapsed noninterrupting event subprocess=draw signal
+]
+
+\tikzstyle{subprocess event} = [
+	start event
+]
+
+\tikzstyle{noninterrupting subprocess event} = [
+	start event,
+	dashed,
+	dash pattern=on 2pt off 2pt
+]
+
+\tikzstyle{message subprocess event} = [
+	subprocess event,
+	draw message
+]
+
+\tikzstyle{message noninterrupting subprocess event} = [
+	noninterrupting subprocess event,
+	draw message
+]
+
+\tikzstyle{timer subprocess event} = [
+	subprocess event,
+	draw timer
+]
+
+\tikzstyle{timer noninterrupting subprocess event} = [
+	noninterrupting subprocess event,
+	draw timer
+]
+
+\tikzstyle{signal subprocess event} = [
+	subprocess event,
+	draw signal
+]
+
+\tikzstyle{signal noninterrupting subprocess event} = [
+	noninterrupting subprocess event,
+	draw signal
+]
+
+\tikzstyle{compensation subprocess event} = [
+	subprocess event,
+	draw compensation
+]
+
+\tikzstyle{error subprocess event} = [
+	subprocess event,
+	draw error
+]
+
+%%%%% call activity %%%%%
+
+\tikzstyle{call task} = [
+	task,
+	thick,
+	every call activity
+]
+
+\tikzstyle{collapsed call subprocess} = [call subprocess]
+\tikzstyle{call subprocess} = [
+	call task, 
+	inner sep=3mm, 
+	label={[anchor=south,
+		inner sep=-0.25mm,
+		shape=square,
+		draw,
+		regular polygon,
+		regular polygon sides=4,
+		yshift=0.5mm
+	]below:\footnotesize +},
+	every call activity
+]
+
+%%%%% sub-processes %%%%%
+
+\def\tikzsubprocessmarker{\tikz{\node[draw, regular polygon, regular polygon sides=4, inner sep=-0.25mm]{\footnotesize +};}}
+\def\tikzmultimarker{%
+	\def\x{0.5mm}%
+	\def\y{0.6mm}%
+	\tikz{
+		\node (b) [opacity=0, draw, regular polygon, regular polygon sides=4, inner sep=-0.25mm]{\footnotesize +};
+		\draw ($(b.center)+(0,-\y)$) to ++(0,2*\y);
+		\draw ($(b.center)+(\x,-\y)$) to ++(0,2*\y);
+		\draw ($(b.center)+(-\x,-\y)$) to ++(0,2*\y);
+	}%
+}
+\def\tikzloopmarker{%
+	\tikz{
+		\node (b) [opacity=0, draw, regular polygon, regular polygon sides=4, inner sep=-0.25mm]{\footnotesize +};
+		\node at (b.center) [rotate=170,yshift=-0.9mm] {\pmb{\circlearrowleft}};
+	}%
+}
+\def\tikzcompensationmarker{%
+	\tikz{
+		\def\y{0.4mm}
+		\node (b) [opacity=0, draw, regular polygon, regular polygon sides=4, inner sep=-0.25mm]{\footnotesize +};
+		\draw [rounded corners=0.05mm] (b.center) to ($(b.north)+(0,-\y)$) to (b.west) to ($(b.south)+(0,\y)$) to (b.center);
+		\draw [rounded corners=0.05mm] (b.center) to ($(b.north east)+(0,-\y)$) to ($(b.south east)+(0,\y)$) to cycle;
+	}%
+}
+
+\tikzstyle{subprocess marker} = [
+	task,
+	inner sep=3mm,
+	task marker=#1
+]
+\tikzstyle{task marker} = [
+	task,
+	label={[anchor=south,inner sep=0]below:#1}
+]
+
+\tikzstyle{subprocess} = [
+	subprocess marker=\tikzsubprocessmarker
+]
+\tikzstyle{collapsed subprocess} = [subprocess]
+\tikzstyle{expanded subprocess} = [task, inner sep=3mm]
+\tikzstyle{subprocess label} = [task, fit margins={left=1.5mm,right=1.5mm,bottom=1.5mm,top=2.1mm}, label={[anchor=north]above:\footnotesize#1}]
+
+\tikzstyle{adhoc subprocess} = [collapsed adhoc subprocess]
+\tikzstyle{collapsed adhoc subprocess} = [
+	subprocess marker=\tikzsubprocessmarker $\thicksim$
+]
+
+\tikzstyle{expanded adhoc subprocess} = [
+	subprocess marker=$\thicksim$
+]
+
+\tikzstyle{multiinstance task} = [
+	subprocess marker=\tikzmultimarker
+]
+
+\tikzstyle{multiinstance subprocess} = [collapsed multiinstance subprocess]
+\tikzstyle{collapsed multiinstance subprocess} = [
+	subprocess marker=\tikzsubprocessmarker \tikzmultimarker
+]
+
+\tikzstyle{expanded multiinstance subprocess} = [
+	subprocess marker=\tikzsubprocessmarker \tikzmultimarker
+]
+
+\tikzstyle{loop task} = [
+	task marker=\tikzloopmarker
+]
+
+\tikzstyle{loop subprocess} = [collapsed loop subprocess]
+\tikzstyle{collapsed loop subprocess} = [
+	subprocess marker=\tikzsubprocessmarker \tikzloopmarker
+]
+
+\tikzstyle{expanded loop subprocess} = [	
+	subprocess marker=\tikzloopmarker
+]
+
+\tikzstyle{compensation task} = [
+	fit margins={left=0.8mm,right=0.8mm,bottom=2.1mm,top=0.8mm},
+	task marker=\tikzcompensationmarker
+]
+
+\tikzstyle{compensation subprocess} = [
+	subprocess marker=\tikzsubprocessmarker \tikzcompensationmarker
+]
+
+%%%%% resources %%%%%
+
+\tikzstyle{pool} = [
+	draw
+]
+
+\tikzstyle{pool label} = [
+	pool,
+	label={[rotate=90,anchor=north]left:\footnotesize #1},
+	fit margins={left=0.8em,right=0.1em,bottom=0.1em,top=0.1em},
+	path picture = {
+		\def\x{1.2em}
+		\draw ($(path picture bounding box.north west)+(\x,0)$) to ($(path picture bounding box.south west)+(\x,0)$);
+	}
+]
+
+%%%%% data %%%%%
+
+\tikzstyle{data object} = [
+	inner sep=0, 
+	minimum width=1em, 
+	minimum height=1.5em, 
+	path picture = {
+		\def\i{0.3em}
+		\draw (path picture bounding box.north west) to (path picture bounding box.south west) to (path picture bounding box.south east) |- ($(path picture bounding box.north east)+(-\i,-\i)$) |- cycle;
+		\draw ($(path picture bounding box.north east)+(-\i,0)$) to ($(path picture bounding box.north east)+(0,-\i)$);
+	}
+]
+
+\tikzstyle{data collection} = [
+	data object,
+	label={[anchor=south,inner sep=0]below:\tikzmultimarker}
+]
+
+\tikzstyle{data store} = [
+	database,
+	database segment height=0.3mm,
+	database bottom segment height=3mm,
+	database aspect ratio=0.25,
+	database radius=0.35cm
+]
+
+%adapted from https://tex.stackexchange.com/questions/442991/database-shape-in-tikz
+\makeatletter
+\tikzset{
+	database/.style={
+		path picture={
+			\draw (0, 1.5*\database@segmentheight+0.5*\database@bottomsegmentheight) circle [x radius=\database@radius,y radius=\database@aspectratio*\database@radius];
+			\draw (-\database@radius, 0.5*\database@segmentheight+0.5*\database@bottomsegmentheight) arc [start angle=180,end angle=360,x radius=\database@radius, y radius=\database@aspectratio*\database@radius];
+			\draw (-\database@radius,-0.5*\database@segmentheight+0.5*\database@bottomsegmentheight) arc [start angle=180,end angle=360,x radius=\database@radius, y radius=\database@aspectratio*\database@radius];
+			\draw (-\database@radius,1.5*\database@segmentheight+0.5*\database@bottomsegmentheight) 
+			to ++(0,-2*\database@segmentheight-\database@bottomsegmentheight) 
+			arc [start angle=180,end angle=360,x radius=\database@radius, y radius=\database@aspectratio*\database@radius] 
+			to ++(0,2*\database@segmentheight+\database@bottomsegmentheight);
+		},
+		minimum width=2*\database@radius + 2*\pgflinewidth,
+		minimum height=2*\database@segmentheight + \database@bottomsegmentheight + 2*\database@aspectratio*\database@radius + 2*\pgflinewidth,
+	},
+	database segment height/.store in=\database@segmentheight,
+	database bottom segment height/.store in=\database@bottomsegmentheight,
+    database radius/.store in=\database@radius,
+    database aspect ratio/.store in=\database@aspectratio,
+    database segment height=0.1cm,
+    database radius=0.25cm,
+    database aspect ratio=0.35,
+}
+\makeatother
